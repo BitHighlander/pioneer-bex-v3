@@ -3,43 +3,46 @@
   const VERSION = '1.0.1';
   console.log('**** Pioneer Injection script ****: ', VERSION);
 
-  const mockedAddress = '0x141D9959cAe3853b035000490C03991eB70Fc4aC';
-  const mockResponses = {
-    eth_accounts: [mockedAddress],
-    eth_requestAccounts: [mockedAddress],
-    eth_chainId: '0x1',
-    net_version: '1',
-    eth_getBlockByNumber: {
-      baseFeePerGas: '0x1',
-    },
-    eth_sign: '0xMockedSignature',
-    personal_sign: '0xMockedPersonalSignature',
-    eth_signTypedData: '0xMockedTypedDataSignature',
-    eth_signTypedData_v3: '0xMockedTypedDataV3Signature',
-    eth_signTypedData_v4: '0xMockedTypedDataV4Signature',
-    eth_getEncryptionPublicKey: '0xMockedEncryptionPublicKey',
-    eth_decrypt: '0xMockedDecryptionResult',
-    eth_sendTransaction: '0xMockedTransactionHash',
-    wallet_addEthereumChain: true,
-    wallet_switchEthereumChain: true,
-    wallet_watchAsset: true,
-    wallet_requestPermissions: [{ parentCapability: 'eth_accounts' }],
-    wallet_getPermissions: [{ parentCapability: 'eth_accounts' }],
-  };
+  async function ethereumRequest(method, params = []) {
+    let tag = TAG + ' | ethereumRequest | ';
+    try {
+      console.log(tag, 'method:', method);
+      console.log(tag, 'params:', params);
 
-  function ethereumRequest(method, params = []) {
-    const tag = TAG + ' | ethereumRequest | ';
-    console.log(tag, 'ethereum.request called with:', method, params);
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (mockResponses[method] !== undefined) {
-          resolve(mockResponses[method]);
-        } else {
-          reject(new Error(`Method ${method} not supported`));
+      return await new Promise((resolve, reject) => {
+        // Send the request to the content script
+        window.postMessage({ type: 'ETH_REQUEST', method, params, tag: TAG }, '*');
+
+        // Listen for the response from the content script
+        function handleMessage(event) {
+          // console.log(tag, 'event:', event);
+          // console.log(tag, 'event.data:', event.data);
+          // console.log(tag, 'event.data.type:', event.data.type);
+          // console.log(tag, 'event.data.result:', event.data.result);
+          if (event.data.result) resolve(event.data.result);
         }
-      }, 100);
-    });
+
+        window.addEventListener('message', handleMessage);
+      });
+    } catch (error) {
+      console.error(tag, `Error in ${TAG}:`, error);
+      throw error;
+    }
   }
+
+  // function ethereumRequest(method, params = []) {
+  //   const tag = TAG + ' | ethereumRequest | ';
+  //   console.log(tag, 'ethereum.request called with:', method, params);
+  //   return new Promise((resolve, reject) => {
+  //     setTimeout(() => {
+  //       if (mockResponses[method] !== undefined) {
+  //         resolve(mockResponses[method]);
+  //       } else {
+  //         reject(new Error(`Method ${method} not supported`));
+  //       }
+  //     }, 100);
+  //   });
+  // }
 
   function sendRequestAsync(payload, callback) {
     const tag = TAG + ' | sendRequestAsync | ';
