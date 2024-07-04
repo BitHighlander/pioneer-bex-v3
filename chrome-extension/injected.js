@@ -3,7 +3,7 @@
   const VERSION = '1.0.1';
   console.log('**** Pioneer Injection script ****: ', VERSION);
 
-  const mockedAddress = '0x1241D9959cAe3853b035000490C03991eB70Fc4aC';
+  const mockedAddress = '0x141D9959cAe3853b035000490C03991eB70Fc4aC';
   const mockResponses = {
     eth_accounts: [mockedAddress],
     eth_requestAccounts: [mockedAddress],
@@ -103,6 +103,27 @@
 
     const proxyEthereum = new Proxy(ethereum, handler);
 
+    const info = {
+      uuid: '350670db-19fa-4704-a166-e52e178b59d2',
+      name: 'Pioneer Wallet',
+      icon: 'https://pioneers.dev/coins/pioneerMan.png',
+      rdns: 'dev.pioneers',
+    };
+
+    const announceEvent = new CustomEvent('eip6963:announceProvider', {
+      detail: Object.freeze({ info, provider: proxyEthereum }),
+    });
+
+    function announceProvider() {
+      window.dispatchEvent(announceEvent);
+    }
+
+    window.addEventListener('eip6963:requestProvider', () => {
+      announceProvider();
+    });
+
+    announceProvider();
+
     Object.defineProperty(window, 'ethereum', {
       value: proxyEthereum,
       writable: false,
@@ -110,5 +131,10 @@
     });
     console.log(tag, 'window.ethereum has been mounted');
   }
-  mountEthereum();
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    mountEthereum();
+  } else {
+    document.addEventListener('DOMContentLoaded', mountEthereum);
+  }
 })();
