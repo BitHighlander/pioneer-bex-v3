@@ -30,20 +30,6 @@
     }
   }
 
-  // function ethereumRequest(method, params = []) {
-  //   const tag = TAG + ' | ethereumRequest | ';
-  //   console.log(tag, 'ethereum.request called with:', method, params);
-  //   return new Promise((resolve, reject) => {
-  //     setTimeout(() => {
-  //       if (mockResponses[method] !== undefined) {
-  //         resolve(mockResponses[method]);
-  //       } else {
-  //         reject(new Error(`Method ${method} not supported`));
-  //       }
-  //     }, 100);
-  //   });
-  // }
-
   function sendRequestAsync(payload, callback) {
     const tag = TAG + ' | sendRequestAsync | ';
     console.log(tag, 'ethereum.sendAsync called with:', payload);

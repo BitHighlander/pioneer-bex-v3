@@ -1,5 +1,87 @@
 import { JsonRpcProvider } from 'ethers';
 
+function convertV4toV3(v4Payload) {
+  const { domain, message, types, primaryType } = v4Payload;
+
+  if (!message || !types || !primaryType) {
+    throw new Error('Invalid v4 payload: missing required fields');
+  }
+
+  // Recursively flatten the message object
+  function flattenMessage(obj, type) {
+    const flatMessage = {};
+
+    function recursiveFlatten(obj, type) {
+      const typeDefinition = types[type];
+      if (!typeDefinition) {
+        throw new Error(`Type ${type} not found in types definition`);
+      }
+
+      typeDefinition.forEach(field => {
+        const fieldName = field.name;
+        const fieldType = field.type;
+
+        if (types[fieldType]) {
+          // Nested type, flatten it recursively
+          const nestedObj = obj[fieldName];
+          if (Array.isArray(nestedObj)) {
+            flatMessage[fieldName] = nestedObj.map(item => recursiveFlatten(item, fieldType));
+          } else {
+            recursiveFlatten(nestedObj, fieldType);
+          }
+        } else {
+          // Primitive type, add to flatMessage
+          flatMessage[fieldName] = obj[fieldName];
+        }
+      });
+    }
+
+    recursiveFlatten(obj, type);
+    return flatMessage;
+  }
+
+  const v3Message = flattenMessage(message, primaryType);
+
+  // Simplify the types, keeping only EIP712Domain and primaryType with all its dependencies
+  const simplifyTypes = (types, primaryType) => {
+    const result = {};
+    const queue = [primaryType];
+    const visited = new Set();
+
+    while (queue.length) {
+      const current = queue.shift();
+      if (!visited.has(current)) {
+        visited.add(current);
+        result[current] = types[current];
+
+        // Add dependencies to the queue
+        if (types[current]) {
+          types[current].forEach(field => {
+            if (types[field.type] && !visited.has(field.type)) {
+              queue.push(field.type);
+            }
+          });
+        }
+      }
+    }
+
+    result.EIP712Domain = types.EIP712Domain; // Ensure EIP712Domain is included
+    return result;
+  };
+
+  const v3Types = simplifyTypes(types, primaryType);
+
+  // Create the new v3 payload
+  const v3Payload = {
+    types: v3Types,
+    primaryType: primaryType,
+    domain: domain,
+    message: v3Message,
+  };
+
+  return v3Payload;
+}
+
 export const handleEthereumRequest = async (
   method: string,
   params: any[],
@@ -84,14 +166,20 @@ export const handleEthereumRequest = async (
         //TODO does ADDRESS = params[0]?
         return await signTypedData(typedData, KEEPKEY_SDK, ADDRESS);
       case 'eth_signTypedData_v3':
-      case 'eth_signTypedData_v4':
         /*
-                params[0] = address
-                params[1] = typedData (as string)
-                 */
-        console.log(tag, 'Calling signTypedData_v* with:', params[1]);
-        //TODO does ADDRESS = params[0]?
+          params[0] = address
+          params[1] = typedData (as string)
+        */
+        //TODO: Does ADDRESS = params[0]?
         return await signTypedData(params[1], KEEPKEY_SDK, ADDRESS);
+      case 'eth_signTypedData_v4':
+        // eslint-disable-next-line no-case-declarations
+        let typedData_v4 = params[1];
+        if (typeof typedData_v4 === 'string') typedData_v4 = JSON.parse(typedData_v4);
+        console.log(tag, 'Calling signTypedData_v* with:', typedData_v4);
+        // eslint-disable-next-line no-case-declarations
+        const v3Payload = convertV4toV3(typedData_v4);
+        return await signTypedData(v3Payload, KEEPKEY_SDK, ADDRESS);
       default:
         console.log(tag, `Method ${method} not supported`);
         throw new Error(`Method ${method} not supported`);
