@@ -1,29 +1,28 @@
 import '@src/NewTab.css';
 import '@src/NewTab.scss';
+import { useEffect } from 'react';
 import { useStorageSuspense, withErrorBoundary, withSuspense } from '@chrome-extension-boilerplate/shared';
 import { exampleThemeStorage } from '@chrome-extension-boilerplate/storage';
 import { ComponentPropsWithoutRef } from 'react';
+import { useOnStartApp } from './onStart';
+import { usePioneer } from '@coinmasters/pioneer-react';
+import { Portfolio } from '@coinmasters/pioneer-lib';
 
 const NewTab = () => {
+  const onStartApp = useOnStartApp();
+  // const { state } = usePioneer();
+  // const { app } = state;
   const theme = useStorageSuspense(exampleThemeStorage);
+
+  useEffect(() => {
+    onStartApp();
+  }, []);
 
   return (
     <div className="App" style={{ backgroundColor: theme === 'light' ? '#eee' : '#222' }}>
       <header className="App-header" style={{ color: theme === 'light' ? '#222' : '#eee' }}>
-        <img src={chrome.runtime.getURL('new-tab/logo.svg')} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>pages/new-tab/src/NewTab.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: theme === 'light' ? '#0281dc' : undefined, marginBottom: '10px' }}>
-          Learn React
-        </a>
-        <h6>The color of this paragraph is defined using SASS.</h6>
-        <ToggleButton>Toggle theme</ToggleButton>
+        {/*<Pioneer usePioneer={usePioneer}></Pioneer>*/}
+        <Portfolio usePioneer={usePioneer}></Portfolio>
       </header>
     </div>
   );

@@ -9,22 +9,27 @@
   ],
   "scripts": {
     "clean": "rimraf ./dist",
-    "build": "pnpm run clean && tsc --noEmit && vite build",
-    "build:watch": "cross-env __DEV__=true vite build -w --mode development",
-    "dev": "pnpm build:watch",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "pnpm lint --fix",
-    "prettier": "prettier . --write --ignore-path ../../.prettierignore",
-    "type-check": "tsc --noEmit"
+    "build": "cross-env NODE_OPTIONS=--max_old_space_size=8192 pnpm run clean && cross-env NODE_OPTIONS=--max_old_space_size=8192 tsc --noEmit && cross-env NODE_OPTIONS=--max_old_space_size=8192 vite build",
+    "build:watch": "cross-env NODE_OPTIONS=--max_old_space_size=8192 cross-env __DEV__=true vite build -w --mode development",
+    "dev": "cross-env NODE_OPTIONS=--max_old_space_size=8192 pnpm build:watch",
+    "lint": "cross-env NODE_OPTIONS=--max_old_space_size=8192 eslint . --ext .ts,.tsx",
+    "lint:fix": "cross-env NODE_OPTIONS=--max_old_space_size=8192 pnpm lint --fix",
+    "prettier": "cross-env NODE_OPTIONS=--max_old_space_size=8192 prettier . --write --ignore-path ../../.prettierignore",
+    "type-check": "cross-env NODE_OPTIONS=--max_old_space_size=8192 tsc --noEmit"
   },
   "dependencies": {
+    "@chakra-ui/react": "^2.8.2",
     "@chrome-extension-boilerplate/shared": "workspace:*",
-    "@chrome-extension-boilerplate/storage": "workspace:*"
+    "@chrome-extension-boilerplate/storage": "workspace:*",
+    "@coinmasters/pioneer-lib": "^0.1.53",
+    "@coinmasters/pioneer-react": "^0.7.42",
+    "@coinmasters/types": "^4.7.41",
+    "@coinmasters/wallet-keepkey": "^13.0.41"
   },
   "devDependencies": {
+    "@chrome-extension-boilerplate/hmr": "workspace:*",
     "@chrome-extension-boilerplate/tailwindcss-config": "workspace:*",
     "@chrome-extension-boilerplate/tsconfig": "workspace:*",
-    "@chrome-extension-boilerplate/hmr": "workspace:*",
     "sass": "1.77.5"
   }
 }
